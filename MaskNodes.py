@@ -1289,6 +1289,52 @@ class MaqueradeIncrementerNode:
     def increment(self, seed, max_value):
         return (seed % max_value,)
 
+class ShiftMask:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "mask": ("IMAGE",),
+                "shift_type": (["pixels", "percentage"],),
+                "shift_x": ("INT", {"default": 0, "min": -VERY_BIG_SIZE, "max": VERY_BIG_SIZE, "step": 1}),
+                "shift_y": ("INT", {"default": 0, "min": -VERY_BIG_SIZE, "max": VERY_BIG_SIZE, "step": 1}),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)  # Returns only the shifted mask
+    FUNCTION = "shift_mask"
+
+    CATEGORY = "Transformation Nodes"
+
+    def shift_mask(self, mask, shift_type, shift_x, shift_y):
+        mask_size = mask.size()
+        mask_width, mask_height = int(mask_size[2]), int(mask_size[1])
+
+        if shift_type == "percentage":
+            shift_x = int(mask_width * (shift_x / 100.0))
+            shift_y = int(mask_height * (shift_y / 100.0))
+
+        shifted_mask = torch.zeros_like(mask)
+
+        # Find the coordinates of the white region in the mask
+        y_indices, x_indices = torch.where(mask[0] > 0)  # Assuming mask is single-channel
+        min_x, max_x = torch.min(x_indices).item(), torch.max(x_indices).item()
+        min_y, max_y = torch.min(y_indices).item(), torch.max(y_indices).item()
+
+        # Calculate new coordinates after shift
+        new_min_x = max(min_x + shift_x, 0)
+        new_max_x = min(max_x + shift_x, mask_width)
+        new_min_y = max(min_y + shift_y, 0)
+        new_max_y = min(max_y + shift_y, mask_height)
+
+        # Apply the shift
+        shifted_mask[0, new_min_y:new_max_y, new_min_x:new_max_x] = 1
+
+        return (shifted_mask,)
+
 
 NODE_CLASS_MAPPINGS = {
     "Mask By Text": ClipSegNode,
@@ -1313,6 +1359,8 @@ NODE_CLASS_MAPPINGS = {
     "Create QR Code": CreateQRCodeNode,
     "Convert Color Space": ConvertColorSpace,
     "MasqueradeIncrementer": MaqueradeIncrementerNode,
+    "Angel-MaskShift": ShiftMask,
+
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -1338,4 +1386,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Create QR Code": "Create QR Code",
     "Convert Color Space": "Convert Color Space",
     "MasqueradeIncrementer": "Incrementer",
+    "Angel-MaskShift": "Shift Mask",
+
 }
