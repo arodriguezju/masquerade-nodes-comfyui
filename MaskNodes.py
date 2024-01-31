@@ -1336,6 +1336,40 @@ class ShiftMask:
         return (shifted_mask,)
 
 
+class GetMaskSize:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "mask": ("IMAGE",),
+            },
+        }
+
+    RETURN_TYPES = ("INT", "INT", "INT", "INT", "INT", "INT")  # Returns top-left coordinates, bottom-right coordinates, width, and height of the mask
+    FUNCTION = "get_mask_coordinates"
+
+    CATEGORY = "Transformation Nodes"
+
+    def get_mask_coordinates(self, mask):
+        # Assuming mask is a single-channel image
+        y_indices, x_indices = torch.where(mask[0] > 0)
+
+        if y_indices.nelement() == 0 or x_indices.nelement() == 0:
+            # No mask present in the image
+            return (0, 0, 0, 0, 0, 0)
+
+        min_x, max_x = torch.min(x_indices).item(), torch.max(x_indices).item()
+        min_y, max_y = torch.min(y_indices).item(), torch.max(y_indices).item()
+
+        width = max_x - min_x + 1  # +1 to include both boundary pixels
+        height = max_y - min_y + 1
+
+        return (min_x, min_y, max_x, max_y, width, height)
+
+
 NODE_CLASS_MAPPINGS = {
     "Mask By Text": ClipSegNode,
     "Mask Morphology": MaskMorphologyNode,
@@ -1360,7 +1394,7 @@ NODE_CLASS_MAPPINGS = {
     "Convert Color Space": ConvertColorSpace,
     "MasqueradeIncrementer": MaqueradeIncrementerNode,
     "Angel-MaskShift": ShiftMask,
-
+    "Angel-MaskSize": GetMaskSize,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -1387,5 +1421,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Convert Color Space": "Convert Color Space",
     "MasqueradeIncrementer": "Incrementer",
     "Angel-MaskShift": "Shift Mask",
+    "Angel-MaskSize": "Get Mask Size",
 
 }
