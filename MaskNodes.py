@@ -1309,31 +1309,33 @@ class ShiftMask:
 
     CATEGORY = "Transformation Nodes"
 
-    def shift_mask(self, mask, shift_type, shift_x, shift_y):
-        mask_size = mask.size()
-        mask_width, mask_height = int(mask_size[2]), int(mask_size[1])
-
+    def shift_mask(self, masks, shift_type, shift_x, shift_y):
+        batch_size, channels, height, width = masks.shape
+    
         if shift_type == "percentage":
-            shift_x = int(mask_width * (shift_x / 100.0))
-            shift_y = int(mask_height * (shift_y / 100.0))
+            shift_x_abs = (width * shift_x / 100.0).astype(torch.int32)
+            shift_y_abs = (height * shift_y / 100.0).astype(torch.int32)
+        else:
+            shift_x_abs = shift_x
+            shift_y_abs = shift_y
 
-        shifted_mask = torch.zeros_like(mask)
+        shifted_masks = torch.zeros_like(masks)
+        
+        for i in range(batch_size):
+            mask = masks[i]
+            # Assuming mask is a single-channel image and binary (mask areas are 1)
+            non_zero_y, non_zero_x = torch.where(mask[0] > 0)
+            
+            # Apply shift
+            shifted_x = torch.clamp(non_zero_x + shift_x_abs, min=0, max=width - 1)
+            shifted_y = torch.clamp(non_zero_y + shift_y_abs, min=0, max=height - 1)
 
-        # Find the coordinates of the white region in the mask
-        y_indices, x_indices = torch.where(mask[0] > 0)  # Assuming mask is single-channel
-        min_x, max_x = torch.min(x_indices).item(), torch.max(x_indices).item()
-        min_y, max_y = torch.min(y_indices).item(), torch.max(y_indices).item()
+            # Create a new mask for the shifted positions
+            new_mask = torch.zeros_like(mask)
+            new_mask[0, shifted_y, shifted_x] = 1
+            shifted_masks[i] = new_mask
 
-        # Calculate new coordinates after shift
-        new_min_x = max(min_x + shift_x, 0)
-        new_max_x = min(max_x + shift_x, mask_width)
-        new_min_y = max(min_y + shift_y, 0)
-        new_max_y = min(max_y + shift_y, mask_height)
-
-        # Apply the shift
-        shifted_mask[0, new_min_y:new_max_y, new_min_x:new_max_x] = 1
-
-        return (shifted_mask,)
+        return shifted_masks
 
 
 class GetMaskSize:
@@ -1421,6 +1423,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Convert Color Space": "Convert Color Space",
     "MasqueradeIncrementer": "Incrementer",
     "Angel-MaskShift": "Shift Mask",
-    "Angel-MaskSize": "Get Mask Size",
+    "Angel-MaskSize": "Get Mask Size (minX, minY, maxX, maxY, width, height)",
 
 }
