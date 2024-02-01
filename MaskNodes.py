@@ -1297,7 +1297,7 @@ class ShiftMask:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "mask": ("IMAGE",),
+                "masks": ("IMAGE",),
                 "shift_type": (["pixels", "percentage"],),
                 "shift_x": ("INT", {"default": 0, "min": -VERY_BIG_SIZE, "max": VERY_BIG_SIZE, "step": 1}),
                 "shift_y": ("INT", {"default": 0, "min": -VERY_BIG_SIZE, "max": VERY_BIG_SIZE, "step": 1}),
