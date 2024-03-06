@@ -1407,16 +1407,19 @@ class MaskColor:
         red_dominance = red_channel - (0.5 * green_channel + 0.5 * blue_channel)
         blue_dominance = blue_channel - (0.5 * green_channel + 0.5 * red_channel)
 
-        print(green_dominance, red_dominance, blue_dominance)
         # Create binary masks for each color dominance
         _, green_mask = cv2.threshold(green_dominance, green_threshold, 255, cv2.THRESH_BINARY)
         _, red_mask = cv2.threshold(red_dominance, red_threshold, 255, cv2.THRESH_BINARY)
         _, blue_mask = cv2.threshold(blue_dominance, blue_threshold, 255, cv2.THRESH_BINARY)
 
         # Combine masks to get a mask where any of the colors is dominant below its threshold
-        combined_mask = np.maximum(np.maximum(green_mask, red_mask), blue_mask)
+        combined_mask = np.maximum(np.maximum(green_mask, red_mask), blue_mask).astype(np.float32)
+        
+        # Convert numpy array to torch tensor and add channel dimension
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        torch_image = torch.from_numpy(combined_mask).unsqueeze(0).to(device)  # Add channel dimension
 
-        return (combined_mask.astype(np.uint8),)
+        return (torch_image,)
 
 
 NODE_CLASS_MAPPINGS = {
