@@ -1394,8 +1394,8 @@ class MaskColor:
     def mask_color(self, image_batch, red_threshold, green_threshold, blue_threshold):
         # Ensure the image is a float tensor in the range [0, 255]
         print("Entering function")
-        if image_batch.dtype != torch.float32:
-            image_batch = image_batch.to(torch.float32)
+        # if image_batch.dtype != torch.float32:
+        #     image_batch = image_batch.to(torch.float32)
         
         batch_size, height, width, channels = image_batch.shape
         if channels != 3:
