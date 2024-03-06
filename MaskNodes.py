@@ -1392,12 +1392,21 @@ class MaskColor:
     CATEGORY = "Transformation Nodes"
 
     def mask_color(self, image, red_threshold, green_threshold, blue_threshold):
-    #   if image.dtype != torch.float32:
-        print(image.shape)
-        image = tensor2rgb(image)
-        print(image.shape)
-        # Isolate each channel
-        red_channel, green_channel, blue_channel = image.split(1, dim=0)
+        # Ensure the image is a float tensor in the range [0, 255]
+        if image.dtype != torch.float32:
+            image = image.to(torch.float32)
+        
+        # Check if there's a batch dimension and remove it for processing
+        if image.dim() == 4 and image.shape[0] == 1:
+            image = image.squeeze(0)
+        elif image.dim() != 3 or image.shape[2] != 3:
+            raise ValueError("Input image must be of shape [1, height, width, 3] or [height, width, 3].")
+
+        # Reorder the image to have channels as the first dimension
+        image = image.permute(2, 0, 1)  # Change shape to [3, height, width]
+
+        # Split the channels
+        red_channel, green_channel, blue_channel = image
 
         # Calculate dominance
         green_dominance = green_channel - (0.5 * red_channel + 0.5 * blue_channel)
@@ -1412,11 +1421,8 @@ class MaskColor:
         # Combine masks to get a mask where any of the colors is dominant above its threshold
         combined_mask = torch.max(torch.max(green_mask, red_mask), blue_mask)
 
-        # Ensure the combined mask is in the expected shape [1, height, width] for consistency
-        combined_mask = combined_mask.squeeze(0)  # Remove the singleton channel dimension if necessary
+        # The resulting combined mask will have shape [height, width]; no need for squeezing channel dimension here
 
-        # No need to move the tensor to a device in this function,
-        # as it should already be on the appropriate device (CPU or GPU) based on the input image tensor
         return (combined_mask, )
 
 
