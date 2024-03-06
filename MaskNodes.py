@@ -1392,34 +1392,31 @@ class MaskColor:
     CATEGORY = "Transformation Nodes"
 
     def mask_color(self, image, red_threshold, green_threshold, blue_threshold):
-        open_cv_image = np.array(image)
+      if image.dtype != torch.float32:
+        image = image.to(torch.float32)
     
-        # Convert RGB to BGR
-        open_cv_image = open_cv_image[:, :, ::-1].copy()
-
         # Isolate each channel
-        blue_channel = open_cv_image[:, :, 0]
-        green_channel = open_cv_image[:, :, 1]
-        red_channel = open_cv_image[:, :, 2]
+        red_channel, green_channel, blue_channel = image.split(1, dim=0)
 
         # Calculate dominance
         green_dominance = green_channel - (0.5 * red_channel + 0.5 * blue_channel)
         red_dominance = red_channel - (0.5 * green_channel + 0.5 * blue_channel)
         blue_dominance = blue_channel - (0.5 * green_channel + 0.5 * red_channel)
 
-        # Create binary masks for each color dominance
-        _, green_mask = cv2.threshold(green_dominance, green_threshold, 255, cv2.THRESH_BINARY)
-        _, red_mask = cv2.threshold(red_dominance, red_threshold, 255, cv2.THRESH_BINARY)
-        _, blue_mask = cv2.threshold(blue_dominance, blue_threshold, 255, cv2.THRESH_BINARY)
+        # Create binary masks for each color dominance based on thresholds
+        green_mask = (green_dominance > green_threshold).float() * 255
+        red_mask = (red_dominance > red_threshold).float() * 255
+        blue_mask = (blue_dominance > blue_threshold).float() * 255
 
-        # Combine masks to get a mask where any of the colors is dominant below its threshold
-        combined_mask = np.maximum(np.maximum(green_mask, red_mask), blue_mask).astype(np.float32)
-        
-        # Convert numpy array to torch tensor and add channel dimension
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        torch_image = torch.from_numpy(combined_mask).unsqueeze(0).to(device)  # Add channel dimension
+        # Combine masks to get a mask where any of the colors is dominant above its threshold
+        combined_mask = torch.max(torch.max(green_mask, red_mask), blue_mask)
 
-        return (torch_image,)
+        # Ensure the combined mask is in the expected shape [1, height, width] for consistency
+        combined_mask = combined_mask.squeeze(0)  # Remove the singleton channel dimension if necessary
+
+        # No need to move the tensor to a device in this function,
+        # as it should already be on the appropriate device (CPU or GPU) based on the input image tensor
+        return (combined_mask, )
 
 
 NODE_CLASS_MAPPINGS = {
