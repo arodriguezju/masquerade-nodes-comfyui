@@ -8,6 +8,8 @@ import torchvision.transforms.functional as TF
 import torch.nn.functional as torchfn
 import subprocess
 import sys
+import cv2
+
 
 DELIMITER = '|'
 cached_clipseg_model = None
@@ -1368,6 +1370,53 @@ class GetMaskSize:
         height = max_y - min_y + 1
 
         return (min_x, min_y, max_x, max_y, width, height)
+    
+class MaskColor:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "red_threshold": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+                "green_threshold": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+                "blue_threshold": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "mask_color"
+
+    CATEGORY = "Transformation Nodes"
+
+    def mask_color(self, image, red_threshold, green_threshold, blue_threshold):
+        open_cv_image = np.array(image)
+    
+        # Convert RGB to BGR
+        open_cv_image = open_cv_image[:, :, ::-1].copy()
+
+        # Isolate each channel
+        blue_channel = open_cv_image[:, :, 0]
+        green_channel = open_cv_image[:, :, 1]
+        red_channel = open_cv_image[:, :, 2]
+
+        # Calculate dominance
+        green_dominance = green_channel - (0.5 * red_channel + 0.5 * blue_channel)
+        red_dominance = red_channel - (0.5 * green_channel + 0.5 * blue_channel)
+        blue_dominance = blue_channel - (0.5 * green_channel + 0.5 * red_channel)
+
+        print(green_dominance, red_dominance, blue_dominance)
+        # Create binary masks for each color dominance
+        _, green_mask = cv2.threshold(green_dominance, green_threshold, 255, cv2.THRESH_BINARY)
+        _, red_mask = cv2.threshold(red_dominance, red_threshold, 255, cv2.THRESH_BINARY)
+        _, blue_mask = cv2.threshold(blue_dominance, blue_threshold, 255, cv2.THRESH_BINARY)
+
+        # Combine masks to get a mask where any of the colors is dominant below its threshold
+        combined_mask = np.maximum(np.maximum(green_mask, red_mask), blue_mask)
+
+        return (combined_mask.astype(np.uint8),)
 
 
 NODE_CLASS_MAPPINGS = {
@@ -1395,6 +1444,8 @@ NODE_CLASS_MAPPINGS = {
     "MasqueradeIncrementer": MaqueradeIncrementerNode,
     "Angel-MaskShift": ShiftMask,
     "Angel-MaskSize": GetMaskSize,
+    "Angel-MaskColor": MaskColor,
+
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -1422,5 +1473,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "MasqueradeIncrementer": "Incrementer",
     "Angel-MaskShift": "Shift Mask",
     "Angel-MaskSize": "Get Mask Size (minX, minY, maxX, maxY, width, height)",
-
+    "Angel-MaskColor": "Mask Color",
 }
