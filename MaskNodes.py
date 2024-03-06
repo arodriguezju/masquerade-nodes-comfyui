@@ -1396,6 +1396,7 @@ class MaskColor:
         print("Entering function")
         # if image_batch.dtype != torch.float32:
         #     image_batch = image_batch.to(torch.float32)
+        return image_batch
         
         batch_size, height, width, channels = image_batch.shape
         if channels != 3:
