@@ -1393,15 +1393,22 @@ class MaskColor:
 
     def mask_color(self, image_batch, red_threshold, green_threshold, blue_threshold):
         # Ensure the image is a float tensor in the range [0, 255]
+        print("Entering function")
         if image_batch.dtype != torch.float32:
             image_batch = image_batch.to(torch.float32)
         
         batch_size, height, width, channels = image_batch.shape
         if channels != 3:
+            print("Error")
+
             raise ValueError("Input images must have 3 channels. Found: {}".format(channels))
 
         masks = []
+        print(batch_size)
+
         for i in range(batch_size):
+            print("Processing image")
+
             # Extract a single image from the batch
             image = image_batch[i]
 
@@ -1427,6 +1434,7 @@ class MaskColor:
 
         # Stack all masks to form a batch of the same size as the input batch
         mask_batch = torch.stack(masks, dim=0).unsqueeze(-1)  # Shape: [batch_size, height, width, 1]
+        print("Returning")
 
         return (mask_batch, )
 
