@@ -1404,7 +1404,7 @@ class MaskColor:
 
             raise ValueError("Input images must have 3 channels. Found: {}".format(channels))
 
-        masks = []
+        mask_batch = torch.empty((batch_size, height, width, 1), device=image_batch.device, dtype=torch.float32)
         print(batch_size)
 
         for i in range(batch_size):
@@ -1431,10 +1431,9 @@ class MaskColor:
             combined_mask = torch.max(torch.max(green_mask, red_mask), blue_mask)
 
             # Add the single mask to the list
-            masks.append(combined_mask.unsqueeze(0))  # Add back the batch dimension for stacking
+            mask_batch[i] = combined_mask.unsqueeze(-1) # Add back the batch dimension for stacking
 
         # Stack all masks to form a batch of the same size as the input batch
-        mask_batch = torch.stack(masks, dim=0).unsqueeze(-1)  # Shape: [batch_size, height, width, 1]
         print("Returning")
         print(mask_batch.shape)
         return (mask_batch,)
