@@ -1435,8 +1435,8 @@ class MaskColor:
         # Stack all masks to form a batch of the same size as the input batch
         mask_batch = torch.stack(masks, dim=0).unsqueeze(-1)  # Shape: [batch_size, height, width, 1]
         print("Returning")
-
-        return (mask_batch, )
+        print(mask_batch.shape)
+        return image_batch
 
 
 NODE_CLASS_MAPPINGS = {
