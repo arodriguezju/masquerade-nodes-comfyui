@@ -1404,16 +1404,14 @@ class MaskColor:
 
             raise ValueError("Input images must have 3 channels. Found: {}".format(channels))
 
-        mask_batch = torch.empty((batch_size, height, width, 1), device=image_batch.device, dtype=torch.float32)
-        print(batch_size)
+        # Initialize an empty tensor for RGB masks with the correct output shape
+        mask_batch_rgb = torch.empty((batch_size, height, width, 3), device=image_batch.device, dtype=torch.float32)
 
         for i in range(batch_size):
-            print("Processing image")
-
             # Extract a single image from the batch
             image = image_batch[i]
 
-            # Reorder the image to have channels as the first dimension [channels, height, width]
+            # Reorder the image to have channels as the first dimension [3, height, width]
             image = image.permute(2, 0, 1)  # Change shape to [3, height, width]
 
             # Calculate channel dominances
@@ -1430,13 +1428,13 @@ class MaskColor:
             # Combine masks to get a mask where any of the colors is dominant above its threshold
             combined_mask = torch.max(torch.max(green_mask, red_mask), blue_mask)
 
-            # Add the single mask to the list
-            mask_batch[i] = combined_mask.unsqueeze(-1) # Add back the batch dimension for stacking
+            # Replicate the combined mask across 3 channels to create an RGB mask
+            combined_mask_rgb = combined_mask.repeat((3, 1, 1)).permute(1, 2, 0)  # Shape: [height, width, 3]
 
-        # Stack all masks to form a batch of the same size as the input batch
-        print("Returning")
-        print(mask_batch.shape)
-        return (mask_batch,)
+            # Place the RGB mask into the mask batch
+            mask_batch_rgb[i] = combined_mask_rgb
+
+        return (mask_batch_rgb,)
 
 
 NODE_CLASS_MAPPINGS = {
