@@ -1411,27 +1411,30 @@ class MaskColor:
             # Extract a single image from the batch
             image = image_batch[i]
 
-            # Reorder the image to have channels as the first dimension [3, height, width]
-            image = image.permute(2, 0, 1)  # Change shape to [3, height, width]
+            # Normalize the color channels to mitigate the dominant tone
+            mean_channels = image.view(3, -1).mean(dim=1)
+            max_mean = mean_channels.max()
+            normalization_factors = max_mean / (mean_channels + 1e-6)  # Avoid division by zero
+            normalized_image = torch.zeros_like(image)
+            for c in range(3):
+                normalized_image[:, :, c] = image[:, :, c] * normalization_factors[c]
 
-            # Calculate channel dominances
-            red_channel, green_channel, blue_channel = image
+            # Reorder the normalized image to have channels as the first dimension [3, height, width]
+            normalized_image = normalized_image.permute(2, 0, 1)  # Change shape to [3, height, width]
+
+            # Following steps are as before, applied on the normalized image
+            red_channel, green_channel, blue_channel = normalized_image
             green_dominance = green_channel - (0.5 * red_channel + 0.5 * blue_channel)
             red_dominance = red_channel - (0.5 * green_channel + 0.5 * blue_channel)
             blue_dominance = blue_channel - (0.5 * green_channel + 0.5 * red_channel)
 
-            # Create binary masks for each color dominance based on thresholds
             green_mask = (green_dominance > green_threshold).float()
             red_mask = (red_dominance > red_threshold).float()
             blue_mask = (blue_dominance > blue_threshold).float()
 
-            # Combine masks to get a mask where any of the colors is dominant above its threshold
             combined_mask = torch.max(torch.max(green_mask, red_mask), blue_mask)
+            combined_mask_rgb = combined_mask.repeat((3, 1, 1)).permute(1, 2, 0)
 
-            # Replicate the combined mask across 3 channels to create an RGB mask
-            combined_mask_rgb = combined_mask.repeat((3, 1, 1)).permute(1, 2, 0)  # Shape: [height, width, 3]
-
-            # Place the RGB mask into the mask batch
             mask_batch_rgb[i] = combined_mask_rgb
 
         return (mask_batch_rgb,)
