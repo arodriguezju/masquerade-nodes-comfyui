@@ -1379,7 +1379,7 @@ class MaskColor:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "image": ("IMAGE",),
+                "image_batch": ("IMAGE",),
                 "red_threshold": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
                 "green_threshold": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
                 "blue_threshold": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
@@ -1391,39 +1391,44 @@ class MaskColor:
 
     CATEGORY = "Transformation Nodes"
 
-    def mask_color(self, image, red_threshold, green_threshold, blue_threshold):
+    def mask_color_torch_batch(image_batch, red_threshold, green_threshold, blue_threshold):
         # Ensure the image is a float tensor in the range [0, 255]
-        if image.dtype != torch.float32:
-            image = image.to(torch.float32)
+        if image_batch.dtype != torch.float32:
+            image_batch = image_batch.to(torch.float32)
         
-        # Check if there's a batch dimension and remove it for processing
-        if image.dim() == 4 and image.shape[0] == 1:
-            image = image.squeeze(0)
-        elif image.dim() != 3 or image.shape[2] != 3:
-            raise ValueError("Input image must be of shape [1, height, width, 3] or [height, width, 3].")
+        batch_size, height, width, channels = image_batch.shape
+        if channels != 3:
+            raise ValueError("Input images must have 3 channels. Found: {}".format(channels))
 
-        # Reorder the image to have channels as the first dimension
-        image = image.permute(2, 0, 1)  # Change shape to [3, height, width]
+        masks = []
+        for i in range(batch_size):
+            # Extract a single image from the batch
+            image = image_batch[i]
 
-        # Split the channels
-        red_channel, green_channel, blue_channel = image
+            # Reorder the image to have channels as the first dimension [channels, height, width]
+            image = image.permute(2, 0, 1)  # Change shape to [3, height, width]
 
-        # Calculate dominance
-        green_dominance = green_channel - (0.5 * red_channel + 0.5 * blue_channel)
-        red_dominance = red_channel - (0.5 * green_channel + 0.5 * blue_channel)
-        blue_dominance = blue_channel - (0.5 * green_channel + 0.5 * red_channel)
+            # Calculate channel dominances
+            red_channel, green_channel, blue_channel = image
+            green_dominance = green_channel - (0.5 * red_channel + 0.5 * blue_channel)
+            red_dominance = red_channel - (0.5 * green_channel + 0.5 * blue_channel)
+            blue_dominance = blue_channel - (0.5 * green_channel + 0.5 * red_channel)
 
-        # Create binary masks for each color dominance based on thresholds
-        green_mask = (green_dominance > green_threshold).float() * 255
-        red_mask = (red_dominance > red_threshold).float() * 255
-        blue_mask = (blue_dominance > blue_threshold).float() * 255
+            # Create binary masks for each color dominance based on thresholds
+            green_mask = (green_dominance > green_threshold).float()
+            red_mask = (red_dominance > red_threshold).float()
+            blue_mask = (blue_dominance > blue_threshold).float()
 
-        # Combine masks to get a mask where any of the colors is dominant above its threshold
-        combined_mask = torch.max(torch.max(green_mask, red_mask), blue_mask)
+            # Combine masks to get a mask where any of the colors is dominant above its threshold
+            combined_mask = torch.max(torch.max(green_mask, red_mask), blue_mask)
 
-        # The resulting combined mask will have shape [height, width]; no need for squeezing channel dimension here
+            # Add the single mask to the list
+            masks.append(combined_mask.unsqueeze(0))  # Add back the batch dimension for stacking
 
-        return (combined_mask, )
+        # Stack all masks to form a batch of the same size as the input batch
+        mask_batch = torch.stack(masks, dim=0).unsqueeze(-1)  # Shape: [batch_size, height, width, 1]
+
+        return mask_batch
 
 
 NODE_CLASS_MAPPINGS = {
