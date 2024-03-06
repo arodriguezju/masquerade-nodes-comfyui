@@ -1391,7 +1391,7 @@ class MaskColor:
 
     CATEGORY = "Transformation Nodes"
 
-    def mask_color_torch_batch(self, image_batch, red_threshold, green_threshold, blue_threshold):
+    def mask_color(self, image_batch, red_threshold, green_threshold, blue_threshold):
         # Ensure the image is a float tensor in the range [0, 255]
         if image_batch.dtype != torch.float32:
             image_batch = image_batch.to(torch.float32)
