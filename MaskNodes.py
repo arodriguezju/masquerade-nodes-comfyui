@@ -1379,7 +1379,7 @@ class MaskColor:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "image_batch": ("IMAGE",),
+                "image_batch": ("IMAGE"),
                 "red_threshold": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
                 "green_threshold": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
                 "blue_threshold": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
