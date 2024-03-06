@@ -1380,9 +1380,9 @@ class MaskColor:
         return {
             "required": {
                 "image_batch": ("IMAGE",),
-                "red_threshold": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
-                "green_threshold": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
-                "blue_threshold": ("INT", {"default": 255, "min": 0, "max": 255, "step": 1}),
+                "red_threshold": ("FLOAT", {"default": 1, "min": 0, "max": 1, "step": 0.01}),
+                "green_threshold": ("FLOAT", {"default": 1, "min": 0, "max": 1, "step": 0.01}),
+                "blue_threshold": ("FLOAT", {"default": 1, "min": 0, "max": 1, "step": 0.01}),
             },
         }
 
