@@ -1393,8 +1393,9 @@ class MaskColor:
 
     def mask_color(self, image, red_threshold, green_threshold, blue_threshold):
     #   if image.dtype != torch.float32:
+        print(image.shape)
         image = tensor2rgb(image)
-
+        print(image.shape)
         # Isolate each channel
         red_channel, green_channel, blue_channel = image.split(1, dim=0)
 
