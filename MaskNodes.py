@@ -1396,8 +1396,8 @@ class MaskColor:
         print("Entering function")
         # if image_batch.dtype != torch.float32:
         #     image_batch = image_batch.to(torch.float32)
-        return (image_batch,)
-        
+        # return (image_batch,)
+        print(image_batch.shape)
         batch_size, height, width, channels = image_batch.shape
         if channels != 3:
             print("Error")
@@ -1437,7 +1437,7 @@ class MaskColor:
         mask_batch = torch.stack(masks, dim=0).unsqueeze(-1)  # Shape: [batch_size, height, width, 1]
         print("Returning")
         print(mask_batch.shape)
-        return image_batch
+        return (mask_batch,)
 
 
 NODE_CLASS_MAPPINGS = {
