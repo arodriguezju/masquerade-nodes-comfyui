@@ -1386,7 +1386,7 @@ class MaskColor:
             },
         }
 
-    RETURN_TYPES = ("IMAGE")
+    RETURN_TYPES = ("IMAGE",)
     FUNCTION = "mask_color"
 
     CATEGORY = "Transformation Nodes"
@@ -1396,7 +1396,7 @@ class MaskColor:
         print("Entering function")
         # if image_batch.dtype != torch.float32:
         #     image_batch = image_batch.to(torch.float32)
-        return (image_batch[0])
+        return (image_batch[0],)
         
         batch_size, height, width, channels = image_batch.shape
         if channels != 3:
