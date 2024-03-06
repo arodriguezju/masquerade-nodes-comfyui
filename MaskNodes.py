@@ -1392,9 +1392,9 @@ class MaskColor:
     CATEGORY = "Transformation Nodes"
 
     def mask_color(self, image, red_threshold, green_threshold, blue_threshold):
-      if image.dtype != torch.float32:
+    #   if image.dtype != torch.float32:
         image = image.to(torch.float32)
-    
+
         # Isolate each channel
         red_channel, green_channel, blue_channel = image.split(1, dim=0)
 
