@@ -50,6 +50,7 @@ class SegmentNode:
         cropped_images_with_box = []
         boxes = []
         images = []
+        print(image_batch.shape)
         for i in range(image_batch.size(0)):
             tensor_img = image_batch[i]
             pil_image = Image.fromarray((tensor_img.permute(1, 2, 0).numpy() * 255).astype(np.uint8))
