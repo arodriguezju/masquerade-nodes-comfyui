@@ -81,8 +81,10 @@ class SegmentNode:
         for i in range(image_batch.size(0)):
             box = box_batch[i]
             image_tensor = image_batch[i]
+            print(image_tensor.shape)
             pil_image = Image.fromarray((image_tensor.permute(1, 2, 0).numpy() * 255).astype(np.uint8))
             image = pil_image.convert("RGB")
+            # image.show()
             inputs = processor(image, input_boxes=[[box.tolist()]], return_tensors="pt").to(get_torch_device())
  
             with torch.no_grad():
@@ -90,18 +92,17 @@ class SegmentNode:
            
             masks = processor.image_processor.post_process_masks(outputs.pred_masks.cpu(), inputs["original_sizes"].cpu(), inputs["reshaped_input_sizes"].cpu(), binarize=False)
             medsam_seg_prob = torch.sigmoid(masks[0])
-            print(medsam_seg_prob.shape)
+
+            Image.fromarray(medsam_seg_prob.squeeze(0).squeeze(0).numpy() * 255).show()
+            # print(medsam_seg_prob.shape)
 
             squeezed_tensor = medsam_seg_prob.squeeze(0).squeeze(0)  # Now shape [h, w]
-            medsam_seg_rgb = squeezed_tensor.unsqueeze(2).repeat(1, 1, 3)  # Now shape [h, w, 3]
+           
 
+            medsam_seg_prob_t = (squeezed_tensor * 255).to(torch.uint8)
 
-            print(medsam_seg_rgb.shape)
-
-            medsam_seg_prob_t = (medsam_seg_rgb * 255).to(torch.uint8)
-
-            print(medsam_seg_prob_t.shape)
-            Image.fromarray(medsam_seg_prob_t.numpy().astype(np.uint8)).save("test.jpg")
+            # print(medsam_seg_prob_t.shape)
+            # Image.fromarray(medsam_seg_prob_t.numpy()).show()
             output_masks.append(squeezed_tensor)
 
         return torch.stack(output_masks)
@@ -156,7 +157,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Segment Image": "Segment Image",
 }
 
-# image = Image.open("test.jpg").convert("RGB")
+# image = Image.open("input.jpg").convert("RGB")
 # transform = transforms.ToTensor()
 # tensor_image = transform(image)
 # batched_image = tensor_image.permute(1, 2, 0).unsqueeze(0)
