@@ -90,7 +90,7 @@ class SegmentNode:
            
             masks = processor.image_processor.post_process_masks(outputs.pred_masks.cpu(), inputs["original_sizes"].cpu(), inputs["reshaped_input_sizes"].cpu(), binarize=False)
             medsam_seg_prob = torch.sigmoid(masks[0])
-            medsam_seg_prob_t = (medsam_seg_prob.squeeze(0, 1) * 255).to(torch.uint8)
+            medsam_seg_prob_t = (medsam_seg_prob.squeeze(0) * 255).to(torch.uint8)
 
             print(medsam_seg_prob_t.shape)
             # Image.fromarray(medsam_seg_prob_t.numpy().astype(np.uint8)).show()
