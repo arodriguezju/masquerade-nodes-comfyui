@@ -1,7 +1,7 @@
 
 
-from GroundingDINO import load_groundingdino_model, groundingdino_predict, draw_box_on_image, get_torch_device
-from MaskNodes import tensor2rgba, tensor2rgb
+from .GroundingDINO import load_groundingdino_model, groundingdino_predict, draw_box_on_image, get_torch_device
+from .MaskNodes import tensor2rgba, tensor2rgb
 from torchvision.transforms.functional import to_tensor, to_pil_image
 from transformers import SamModel, SamProcessor
 
