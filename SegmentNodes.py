@@ -68,7 +68,7 @@ class SegmentNode:
             boxes.append(torch.tensor(box))
 
             transform = transforms.ToTensor()
-            tensor_image = transform(image).permute(1, 2, 0)
+            tensor_image = transform(image)
             print(tensor_image.shape)
             images.append(tensor_image)
 
