@@ -26,15 +26,15 @@ class SegmentNode:
             },
         }
 
-    RETURN_TYPES = ("IMAGE", )
+    RETURN_TYPES = ("IMAGE", "IMAGE", )
     FUNCTION = "detect"
 
     CATEGORY = "Grounding Dino"
 
     def detect(self, image_batch, box_class, box_threshold, sam_model, sam_base_model):
         original_image, crop_image, crop, box = self.detect_box("GroundingDINO_SwinT_OGC (694MB)", image_batch, box_class, box_threshold)
-        # masks = self.segment(sam_model, sam_base_model, crop, box)
-        return (crop, )
+        masks = self.segment(sam_model, sam_base_model, crop, box)
+        return (masks, crop, )
         # draw_box_on_image(crop, torch_box.numpy()).show()
 
     def detect_box(self, grounding_dino_model_name, image_batch, segmentation_class, threshold):
@@ -63,14 +63,10 @@ class SegmentNode:
             image, box = self.crop_image_proportional_padding(pil_image, biggest_box, 0.2)
             cropped_image = draw_box_on_image(image, box)
 
-            original_images_with_box.append(to_tensor(original_image))
-            cropped_images_with_box.append(to_tensor(cropped_image))
+            original_images_with_box.append(to_tensor(original_image).permute(1, 2, 0)) #output needs to be [h, w, c]
+            cropped_images_with_box.append(to_tensor(cropped_image).permute(1, 2, 0))
+            images.append(to_tensor(image).permute(1, 2, 0))
             boxes.append(torch.tensor(box))
-
-            transform = transforms.ToTensor()
-            tensor_image = transform(image).permute(1, 2, 0)
-            print(tensor_image.shape)
-            images.append(tensor_image)
 
         return torch.stack(original_images_with_box), torch.stack(cropped_images_with_box), torch.stack(images), torch.stack(boxes)
 
@@ -85,7 +81,7 @@ class SegmentNode:
         for i in range(image_batch.size(0)):
             box = box_batch[i]
             image_tensor = image_batch[i]
-            pil_image = Image.fromarray((image_tensor.permute(1, 2, 0).numpy() * 255).astype(np.uint8))
+            pil_image = Image.fromarray((image_tensor.numpy() * 255).astype(np.uint8))
             image = pil_image.convert("RGB")
             # image.show()
             inputs = processor(image, input_boxes=[[box.tolist()]], return_tensors="pt").to(get_torch_device())
