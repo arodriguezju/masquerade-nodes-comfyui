@@ -102,7 +102,7 @@ class SegmentNode:
 
             print(medsam_seg_prob_t.shape)
             Image.fromarray(medsam_seg_prob_t.numpy().astype(np.uint8)).save("test.jpg")
-            output_masks.append(medsam_seg_rgb)
+            output_masks.append(squeezed_tensor)
 
         return torch.stack(output_masks)
 
