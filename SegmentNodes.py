@@ -92,7 +92,9 @@ class SegmentNode:
             medsam_seg_prob = torch.sigmoid(masks[0])
             print(medsam_seg_prob.shape)
 
-            medsam_seg_rgb = medsam_seg_prob.squeeze(0).squeeze(0).repeat(1, 1, 3)
+            squeezed_tensor = medsam_seg_prob.squeeze(0).squeeze(0)  # Now shape [h, w]
+            medsam_seg_rgb = squeezed_tensor.unsqueeze(2).repeat(1, 1, 3)  # Now shape [h, w, 3]
+
 
             print(medsam_seg_rgb.shape)
 
