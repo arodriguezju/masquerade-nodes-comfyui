@@ -66,7 +66,10 @@ class SegmentNode:
             original_images_with_box.append(to_tensor(original_image))
             cropped_images_with_box.append(to_tensor(cropped_image))
             boxes.append(torch.tensor(box))
-            images.append(to_tensor(image))
+
+            transform = transforms.ToTensor()
+            tensor_image = transform(image)
+            images.append(tensor_image)
 
         return torch.stack(original_images_with_box), torch.stack(cropped_images_with_box), torch.stack(images), torch.stack(boxes)
 
