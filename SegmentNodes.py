@@ -69,6 +69,7 @@ class SegmentNode:
 
             transform = transforms.ToTensor()
             tensor_image = transform(image)
+            print(tensor_image.shape)
             images.append(tensor_image)
 
         return torch.stack(original_images_with_box), torch.stack(cropped_images_with_box), torch.stack(images), torch.stack(boxes)
@@ -84,7 +85,6 @@ class SegmentNode:
         for i in range(image_batch.size(0)):
             box = box_batch[i]
             image_tensor = image_batch[i]
-            print(image_tensor.shape)
             pil_image = Image.fromarray((image_tensor.permute(1, 2, 0).numpy() * 255).astype(np.uint8))
             image = pil_image.convert("RGB")
             # image.show()
@@ -96,14 +96,11 @@ class SegmentNode:
             masks = processor.image_processor.post_process_masks(outputs.pred_masks.cpu(), inputs["original_sizes"].cpu(), inputs["reshaped_input_sizes"].cpu(), binarize=False)
             medsam_seg_prob = torch.sigmoid(masks[0])
 
-            Image.fromarray(medsam_seg_prob.squeeze(0).squeeze(0).numpy() * 255).show()
+            # Image.fromarray(medsam_seg_prob.squeeze(0).squeeze(0).numpy() * 255).show()
             # print(medsam_seg_prob.shape)
 
             squeezed_tensor = medsam_seg_prob.squeeze(0).squeeze(0)  # Now shape [h, w]
            
-
-            medsam_seg_prob_t = (squeezed_tensor * 255).to(torch.uint8)
-
             # print(medsam_seg_prob_t.shape)
             # Image.fromarray(medsam_seg_prob_t.numpy()).show()
             output_masks.append(squeezed_tensor)
