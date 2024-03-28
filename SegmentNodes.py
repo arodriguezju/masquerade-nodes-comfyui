@@ -92,9 +92,9 @@ class SegmentNode:
 
             masks = processor.image_processor.post_process_masks(outputs.pred_masks.cpu(), inputs["original_sizes"].cpu(), inputs["reshaped_input_sizes"].cpu(), binarize=False)
             medsam_seg_prob = torch.sigmoid(masks[0])
-            medsam_seg_prob_t = medsam_seg_prob.squeeze(0, 1) * 255
+            medsam_seg_prob_t = (medsam_seg_prob.squeeze(0, 1) * 255).to(torch.uint8)
 
-            #Image.fromarray(medsam_seg_prob_t.numpy().astype(np.uint8)).show()
+            # Image.fromarray(medsam_seg_prob_t.numpy().astype(np.uint8)).show()
             output_masks.append(medsam_seg_prob_t)
 
         return torch.stack(output_masks)
@@ -152,6 +152,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 # image = Image.open("test.jpg").convert("RGB")
 # transform = transforms.ToTensor()
 # tensor_image = transform(image)
-# batched_image = tensor_image.unsqueeze(0)
+# batched_image = tensor_image.permute(1, 2, 0).unsqueeze(0)
 # node = SegmentNode()
-# node.mask_color(batched_image, "earring", 0.3)
+# node.detect(batched_image, "earring", 0.3, "crom87/segmentation_test2", "facebook/sam-vit-base")
