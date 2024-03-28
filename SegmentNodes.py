@@ -26,7 +26,7 @@ class SegmentNode:
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "IMAGE")
+    RETURN_TYPES = ("IMAGE", "IMAGE", )
     FUNCTION = "detect"
 
     CATEGORY = "Grounding Dino"
