@@ -147,9 +147,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Segment Image": "Segment Image",
 }
 
-image = Image.open("test.jpg").convert("RGB")
-transform = transforms.ToTensor()
-tensor_image = transform(image)
-batched_image = tensor_image.unsqueeze(0)
-node = SegmentNode()
-node.mask_color(batched_image, "earring", 0.3)
+# image = Image.open("test.jpg").convert("RGB")
+# transform = transforms.ToTensor()
+# tensor_image = transform(image)
+# batched_image = tensor_image.unsqueeze(0)
+# node = SegmentNode()
+# node.mask_color(batched_image, "earring", 0.3)
