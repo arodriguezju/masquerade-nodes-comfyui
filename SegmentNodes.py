@@ -1,7 +1,7 @@
 
 
-from .GroundingDINO import load_groundingdino_model, groundingdino_predict, draw_box_on_image, get_torch_device
-from .MaskNodes import tensor2rgba, tensor2rgb
+from GroundingDINO import load_groundingdino_model, groundingdino_predict, draw_box_on_image, get_torch_device
+from MaskNodes import tensor2rgba, tensor2rgb
 from torchvision.transforms.functional import to_tensor, to_pil_image
 from transformers import SamModel, SamProcessor
 
@@ -60,7 +60,7 @@ class SegmentNode:
             print(f"Detected {detected_boxes.size(dim=0)} boxes.")
             biggest_box = extract_biggest_box(detected_boxes).numpy()
             original_image = draw_box_on_image(pil_image, biggest_box)
-            image, box = self.crop_image_proportional_padding(pil_image, biggest_box, 0.2)
+            image, box = self.crop_image_proportional_padding(pil_image, biggest_box, 0.4)
             cropped_image = draw_box_on_image(image, box)
 
             original_images_with_box.append(to_tensor(original_image).permute(1, 2, 0)) #output needs to be [h, w, c]
@@ -91,7 +91,7 @@ class SegmentNode:
            
             masks = processor.image_processor.post_process_masks(outputs.pred_masks.cpu(), inputs["original_sizes"].cpu(), inputs["reshaped_input_sizes"].cpu(), binarize=False)
             medsam_seg_prob = torch.sigmoid(masks[0])
-
+            # print(masks[0])
             # Image.fromarray(medsam_seg_prob.squeeze(0).squeeze(0).numpy() * 255).show()
             # print(medsam_seg_prob.shape)
 
@@ -153,9 +153,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Segment Image": "Segment Image",
 }
 
-# image = Image.open("input.jpg").convert("RGB")
-# transform = transforms.ToTensor()
-# tensor_image = transform(image)
-# batched_image = tensor_image.permute(1, 2, 0).unsqueeze(0)
-# node = SegmentNode()
-# node.detect(batched_image, "earring", 0.5, "crom87/segmentation_test2", "facebook/sam-vit-base")
+image = Image.open("crop3_square_1024.png").convert("RGB")
+transform = transforms.ToTensor()
+tensor_image = transform(image)
+batched_image = tensor_image.permute(1, 2, 0).unsqueeze(0)
+node = SegmentNode()
+node.detect(batched_image, "earring", 0.5, "crom87/segmentation_test2", "facebook/sam-vit-base")
