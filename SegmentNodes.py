@@ -1,7 +1,7 @@
 
 
-from GroundingDINO import load_groundingdino_model, groundingdino_predict, draw_box_on_image, get_torch_device
-from MaskNodes import tensor2rgba, tensor2rgb
+from .GroundingDINO import load_groundingdino_model, groundingdino_predict, draw_box_on_image, get_torch_device
+from .MaskNodes import tensor2rgba, tensor2rgb
 from torchvision.transforms.functional import to_tensor, to_pil_image
 from transformers import SamModel, SamProcessor
 
@@ -153,9 +153,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Segment Image": "Segment Image",
 }
 
-image = Image.open("crop3_square_1024.png").convert("RGB")
-transform = transforms.ToTensor()
-tensor_image = transform(image)
-batched_image = tensor_image.permute(1, 2, 0).unsqueeze(0)
-node = SegmentNode()
-node.detect(batched_image, "earring", 0.5, "crom87/segmentation_test2", "facebook/sam-vit-base")
+# image = Image.open("crop3_square_1024.png").convert("RGB")
+# transform = transforms.ToTensor()
+# tensor_image = transform(image)
+# batched_image = tensor_image.permute(1, 2, 0).unsqueeze(0)
+# node = SegmentNode()
+# node.detect(batched_image, "earring", 0.5, "crom87/segmentation_test2", "facebook/sam-vit-base")
