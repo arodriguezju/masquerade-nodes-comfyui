@@ -156,7 +156,7 @@ class GreyScaleToRGBNode:
 
     def run(self, image_batch):
         print(image_batch.shape)
-        rgb =  image_batch.unsqueeze(1).repeat(1, 3, 1, 1)
+        rgb =  image_batch.unsqueeze(1).repeat(1, 3, 1, 1).permute(0, 2, 3, 1)
         print(rgb.shape)
 
         return (rgb,  )
