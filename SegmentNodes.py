@@ -34,7 +34,7 @@ class SegmentNode:
     def detect(self, image_batch, box_class, box_threshold, sam_model, sam_base_model):
         original_image, crop_image, crop, box = self.detect_box("GroundingDINO_SwinT_OGC (694MB)", image_batch, box_class, box_threshold)
         masks = self.segment(sam_model, sam_base_model, crop, box)
-        masked_image = self.apply_mask_to_image(masks, crop_image, 0.5)
+        masked_image = self.apply_mask_to_image(self, masks, crop, 0.5)
         return (masks, crop, masked_image, )
         # draw_box_on_image(crop, torch_box.numpy()).show()
 
