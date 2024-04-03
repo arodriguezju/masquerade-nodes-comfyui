@@ -26,7 +26,7 @@ class SegmentNode:
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "IMAGE", )
+    RETURN_TYPES = ("IMAGE", "IMAGE", "IMAGE", )
     FUNCTION = "detect"
 
     CATEGORY = "Grounding Dino"
@@ -34,7 +34,8 @@ class SegmentNode:
     def detect(self, image_batch, box_class, box_threshold, sam_model, sam_base_model):
         original_image, crop_image, crop, box = self.detect_box("GroundingDINO_SwinT_OGC (694MB)", image_batch, box_class, box_threshold)
         masks = self.segment(sam_model, sam_base_model, crop, box)
-        return (masks, crop, )
+        masked_image = self.apply_mask_to_image(masks, crop_image, 0.5)
+        return (masks, crop, masked_image, )
         # draw_box_on_image(crop, torch_box.numpy()).show()
 
     def detect_box(self, grounding_dino_model_name, image_batch, segmentation_class, threshold):
@@ -135,7 +136,19 @@ class SegmentNode:
         new_y2 = new_y1 + bb_height
         
         return cropped_image, (new_x1, new_y1, new_x2, new_y2)
-
+    
+    def apply_mask_to_image(masks, image, threshold):
+       
+        binarized_masks = (masks > threshold).float()        
+      
+        # Unsqueeze the mask tensor to add a channel dimension, making it [B, H, W, 1]
+        binarized_masks = binarized_masks.unsqueeze(-1)
+        
+        
+        # Expand the mask to match the image's shape [B, H, W, C] for broadcasting
+        masked_image = image * binarized_masks.expand_as(image)
+        
+        return masked_image
 
 class GreyScaleToRGBNode:
     def __init__(self):
