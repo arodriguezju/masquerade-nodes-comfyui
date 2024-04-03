@@ -136,6 +136,31 @@ class SegmentNode:
         
         return cropped_image, (new_x1, new_y1, new_x2, new_y2)
 
+
+class GreyScaleToRGBNode:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image_batch": ("IMAGE",),                
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE", )
+    FUNCTION = "run"
+
+    CATEGORY = "Grounding Dino"
+
+    def run(self, image_batch):
+        rgb =  image_batch.unsqueeze(1).repeat(1, 3, 1, 1)
+        return (rgb,  )
+        # draw_box_on_image(crop, torch_box.numpy()).show()
+
+    
+                               
 # Example usage
 # image_path = "path_to_your_image.jpg"
 # bounding_box = (100, 150, 200, 250)  # Example bounding box
@@ -147,10 +172,12 @@ class SegmentNode:
 
 NODE_CLASS_MAPPINGS = {
     "Segment Image": SegmentNode,
+    "GreyScaleToRGB": GreyScaleToRGBNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "Segment Image": "Segment Image",
+    "GreyScaleToRGB": "GreyScaleToRGB",
 }
 
 # image = Image.open("crop3_square_1024.png").convert("RGB")
