@@ -30,6 +30,8 @@ class ComposeNode:
     
 
     def create_collage(self, mask, image, maxSize, padding, numberOfRepetitions):
+        print("shapes")
+        print(mask.shape, image.shape)
         device = torch.device("cpu")
         mask = mask.to(device)
         image = image.to(device)
@@ -37,7 +39,10 @@ class ComposeNode:
         p_image = image.permute(0, 3, 1, 2)  # Permute channel because torch expects C, H, W
         p_mask = mask.unsqueeze(1)  # Add a channel dimension to the mask
         B, C, H, W = p_image.shape
-        
+
+        print("shapes")
+        print(p_mask.shape, p_image.shape)
+
         scale_factor = min(maxSize / max(H, W), 1)  # Ensure not to upscale
         newH, newW = int(H * scale_factor), int(W * scale_factor)
         max_separation = int(padding)  # Maximum separation between images
@@ -74,6 +79,9 @@ class ComposeNode:
                 # Assign the resized images/masks to the base image/mask at the calculated x_offset
                 resized_image = TF.resize(p_image[b], [newH, newW])
                 resized_mask = TF.resize(p_mask[b], [newH, newW])
+
+                print("shapes")
+                print(resized_image.shape,p_image[b].shape)
                 base_images[b, :, y_offset:y_offset+newH, x_offset:x_offset+newW] = resized_image
                 base_masks[b, :, y_offset:y_offset+newH, x_offset:x_offset+newW] = resized_mask
 
