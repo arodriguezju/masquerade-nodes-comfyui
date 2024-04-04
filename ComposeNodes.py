@@ -81,3 +81,10 @@ class ComposeNode:
         return base_masks.squeeze(1), base_images.permute(0,2,3,1)  # Remove the single channel dim from masks for consistency
 
 
+NODE_CLASS_MAPPINGS = {
+    "Compose Image": ComposeNode,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "Compose Image": "Compose Image",
+}
