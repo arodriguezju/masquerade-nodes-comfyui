@@ -17,14 +17,15 @@ class TxtPromptLoaderNode:
             },
         }
 
-    RETURN_TYPES = ("STRING", )
+    RETURN_TYPES = ("STRING","STRING", )
     FUNCTION = "run"
 
     CATEGORY = "PromptLoader"
 
     def run(self, seed, file_path):
-        
-        return (self.get_line_from_file(seed, file_path), )
+        line = self.get_line_from_file(seed, file_path)
+        prompt = line.replace(" ", "_")
+        return (line,prompt, )
     
 
     def get_line_from_file(self, line_number, file_path):
