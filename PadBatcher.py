@@ -32,8 +32,12 @@ def unpad_image(image):
     valid_rows = ~(image == -1).all(dim=1).all(dim=1)  # Check each row
     valid_cols = ~(image == -1).all(dim=0).all(dim=0)  # Check each column
 
+    # Add a new axis to valid_rows and valid_cols
+    valid_rows = valid_rows.unsqueeze(-1)
+    valid_cols = valid_cols.unsqueeze(0)
+
     # Crop the image to these valid rows and columns
-    cropped_img = image[valid_rows][:, valid_cols]
+    cropped_img = image[valid_rows] * valid_cols
 
     return cropped_img
 
