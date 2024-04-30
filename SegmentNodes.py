@@ -55,6 +55,7 @@ class SegmentNode:
         for i in range(image_batch.size(0)):
             tensor_img = image_batch[i]
             print(tensor_img.shape)
+            print(tensor_img.dtype)
             pil_image = Image.fromarray((tensor_img.numpy() * 255).astype(np.uint8))
             # image = Image.fromarray(image.numpy().astype(np.uint8))
             detected_boxes = groundingdino_predict(grounding_dino_model, pil_image, segmentation_class, threshold)
