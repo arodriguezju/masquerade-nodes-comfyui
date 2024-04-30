@@ -12,7 +12,7 @@ def pad_and_batch_images(images):
 
     # Pad each image and copy it into the batch tensor
     for i, img in enumerate(images):
-        img_tensor = torch.from_numpy(img).permute(2, 0, 1)  # Rearrange dimensions from HWC to CHW
+        img_tensor = img.permute(2, 0, 1)  # Rearrange dimensions from HWC to CHW
         # Calculate padding sizes
         padding_left = 0
         padding_right = max_width - img.shape[1]
