@@ -93,7 +93,7 @@ class SegmentNode:
             print("Segment unpadded tensor shape: " + str(unpadded_tensor.shape))  # [h, w, c]
             print("Segment unpadded tensor type: " + str(unpadded_tensor.dtype)) #float32
 
-            pil_image = Image.fromarray(unpadded_tensor.numpy().astype(np.uint8))
+            pil_image = Image.fromarray((unpadded_tensor.numpy() * 255).astype(np.uint8))
             image = pil_image.convert("RGB")
             # image.show()
             inputs = processor(image, input_boxes=[[box.tolist()]], return_tensors="pt").to(get_torch_device())
