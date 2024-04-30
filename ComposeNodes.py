@@ -54,6 +54,7 @@ class ComposeNode:
             image = image_batch[i]
             image = unpad_image(image)
             # Resize the image to max_size x max_size
+            image = image.permute(2, 0, 1)  # From HWC to CHW  because PIL expects C, H, W
             print("Input Image shape: ", str(image.shape))
 
             pil_image = transforms.ToPILImage()(image)
@@ -76,11 +77,11 @@ class ComposeNode:
             object_image_tensor = transforms.ToTensor()(object_image)
 
             print("Object image after resize shape: ", str(background_tensor.shape))
-
+            object_image_tensor_permuted = object_image_tensor.permute(1, 2, 0) #because Comfy expects HWC
             # Paste the image in the center of the output image
             x_start = (max_size - new_width) // 2
             y_start = (max_size - new_height) // 2
-            collage_batch[i, y_start:y_start+new_height, x_start:x_start+new_width, :] = object_image_tensor
+            collage_batch[i, y_start:y_start+new_height, x_start:x_start+new_width, :] = object_image_tensor_permuted
 
             # # Repeat the object in the collage
             # for _ in range(number_of_repetitions - 1):
