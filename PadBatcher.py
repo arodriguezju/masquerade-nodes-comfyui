@@ -29,8 +29,8 @@ def unpad_image(image):
     assert image.dim() == 3, "Input tensor must have 3 dimensions (H, W, C)"
     
     # Identify rows and columns that contain only -1 values across all channels
-    valid_rows = ~(image == -1).all(dim=(1, 2))  # Check each row
-    valid_cols = ~(image == -1).all(dim=(0, 2))  # Check each column
+    valid_rows = ~(image == -1).all(dim=1).all(dim=1)  # Check each row
+    valid_cols = ~(image == -1).all(dim=0).all(dim=0)  # Check each column
 
     # Crop the image to these valid rows and columns
     cropped_img = image[valid_rows][:, valid_cols]
