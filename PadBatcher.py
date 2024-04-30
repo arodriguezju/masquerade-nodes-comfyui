@@ -33,25 +33,26 @@ def pad_and_batch_images(tensors):
 
     return batched_tensor
 
-def unpad_image(image):
-    # Assuming the tensor format is (H, W, C) and padding value is -1
-    assert image.dim() == 3, "Input tensor must have 3 dimensions (H, W, C)"
-    
-    # Identify rows and columns that contain only -1 values across all channels
-    valid_rows = ~(image == -1).any(dim=2).any(dim=1)  # Check each row
-    valid_cols = ~(image == -1).any(dim=2).any(dim=0)  # Check each column
+def unpad_image(tensor):
+    """
+    Unpads a tensor by removing torch.nan values.
+    Expects a tensor of shape HWC, float32.
+    Returns a tensor of shape HWC, float32 with new size.
+    """
+    # Find the indices of non-NaN values in each dimension
+    height_idx = torch.nonzero(~torch.isnan(tensor[:, :, 0]), as_tuple=True)[0]
+    width_idx = torch.nonzero(~torch.isnan(tensor[:, 0, :]), as_tuple=True)[0]
 
-    # Find the first and last valid rows and columns
-    first_valid_row = valid_rows.nonzero()[0][0]
-    last_valid_row = valid_rows.nonzero()[-1][0]
-    first_valid_col = valid_cols.nonzero()[0][0]
-    last_valid_col = valid_cols.nonzero()[-1][0]
+    # Find the minimum and maximum indices in each dimension
+    min_height = height_idx.min()
+    max_height = height_idx.max() + 1
+    min_width = width_idx.min()
+    max_width = width_idx.max() + 1
 
-    # Crop the image to these valid rows and columns
-    cropped_img = image[first_valid_row:last_valid_row+1, first_valid_col:last_valid_col+1, :]
+    # Slice the tensor to remove NaN values
+    unpadded_tensor = tensor[min_height:max_height, min_width:max_width, :]
 
-    return cropped_img
-
+    return unpadded_tensor
 # Example usage
 # images = [np.random.rand(32, 32, 3), np.random.rand(28, 28, 3)]  # list of HWC numpy arrays
 # batched_images = pad_and_batch_images(images)
