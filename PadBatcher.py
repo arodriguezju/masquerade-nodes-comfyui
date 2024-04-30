@@ -29,15 +29,17 @@ def unpad_image(image):
     assert image.dim() == 3, "Input tensor must have 3 dimensions (H, W, C)"
     
     # Identify rows and columns that contain only -1 values across all channels
-    valid_rows = ~(image == -1).all(dim=1).all(dim=1)  # Check each row
-    valid_cols = ~(image == -1).all(dim=0).all(dim=0)  # Check each column
+    valid_rows = ~(image == -1).any(dim=2).any(dim=1)  # Check each row
+    valid_cols = ~(image == -1).any(dim=2).any(dim=0)  # Check each column
 
-    # Add a new axis to valid_rows and valid_cols
-    valid_rows = valid_rows.unsqueeze(-1)
-    valid_cols = valid_cols.unsqueeze(0)
+    # Find the first and last valid rows and columns
+    first_valid_row = valid_rows.nonzero()[0][0]
+    last_valid_row = valid_rows.nonzero()[-1][0]
+    first_valid_col = valid_cols.nonzero()[0][0]
+    last_valid_col = valid_cols.nonzero()[-1][0]
 
     # Crop the image to these valid rows and columns
-    cropped_img = image[valid_rows] * valid_cols
+    cropped_img = image[first_valid_row:last_valid_row+1, first_valid_col:last_valid_col+1, :]
 
     return cropped_img
 
