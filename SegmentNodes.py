@@ -69,8 +69,8 @@ class SegmentNode:
             cropped_images_with_box.append(to_tensor(cropped_image).permute(1, 2, 0))
             images.append(to_tensor(image).permute(1, 2, 0))
             boxes.append(torch.tensor(box))
-            print("Detect output tensor shape: " + str(image.shape))
-            print("Detect output tensor type: " + str(image.dtype))
+            print("Detect output tensor shape: " + str(images[i].shape))
+            print("Detect output tensor type: " + str(images[i].dtype))
         return pad_and_batch_images(original_images_with_box), pad_and_batch_images(cropped_images_with_box), pad_and_batch_images(images), torch.stack(boxes)
 
     def segment(self, sam_model, sam_model_base, image_batch, box_batch):
