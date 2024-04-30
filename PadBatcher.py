@@ -28,9 +28,6 @@ def unpad_image(image):
     # Assuming the tensor format is (H, W, C) and padding value is -1
     assert image.dim() == 3, "Input tensor must have 3 dimensions (H, W, C)"
     
-    # Convert the tensor to float32
-    image = image.float()
-    
     # Identify rows and columns that contain only -1 values across all channels
     valid_rows = ~(image == -1).any(dim=2).any(dim=1)  # Check each row
     valid_cols = ~(image == -1).any(dim=2).any(dim=0)  # Check each column
@@ -44,7 +41,7 @@ def unpad_image(image):
     # Crop the image to these valid rows and columns
     cropped_img = image[first_valid_row:last_valid_row+1, first_valid_col:last_valid_col+1, :]
 
-    return torch.clamp(cropped_img, 0, 255)
+    return cropped_img
 
 # Example usage
 # images = [np.random.rand(32, 32, 3), np.random.rand(28, 28, 3)]  # list of HWC numpy arrays
