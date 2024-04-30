@@ -82,6 +82,9 @@ class SegmentNode:
         for i in range(image_batch.size(0)):
             box = box_batch[i]
             image_tensor = unpad_image(image_batch[i])
+            print(image_batch[i].dtype)
+
+            print(image_tensor.dtype)
             pil_image = Image.fromarray(image_tensor.numpy())
             image = pil_image.convert("RGB")
             # image.show()
