@@ -28,13 +28,13 @@ class ComposeNode:
 
     def run(self, mask_batch, image_batch, maxSize, item_size_percentage, numberOfRepetitions):
         # masks, images = self.create_collage(mask_batch, image_batch, maxSize, item_size_percentage, numberOfRepetitions)
-        images = self.create_collage(image_batch, maxSize, item_size_percentage, numberOfRepetitions)
+        masks, images = self.create_collage(mask_batch, image_batch, maxSize, item_size_percentage, numberOfRepetitions)
 
-        return (mask_batch, images, )
+        return (masks, images, )
     
 
 
-    def create_collage(self, image_batch, max_size, object_size_proportion, number_of_repetitions):
+    def create_collage(self, mask_batch, image_batch, max_size, object_size_proportion, number_of_repetitions):
         """
         Create a collage with the object in the image batch.
 
@@ -49,15 +49,20 @@ class ComposeNode:
         """
         batch_size, _, _, channels = image_batch.shape
         collage_batch = torch.zeros((batch_size, max_size, max_size, channels), dtype=torch.float32)
+        masks_batch = torch.zeros((batch_size, max_size, max_size, channels), dtype=torch.float32)
 
         for i in range(batch_size):
             image = image_batch[i]
+            mask = mask_batch[i]
             image = unpad_image(image)
+            mask = unpad_image(mask)
             # Resize the image to max_size x max_size
             image = image.permute(2, 0, 1)  # From HWC to CHW  because PIL expects C, H, W
+            mask = mask.permute(2, 0, 1)
             print("Input Image shape: ", str(image.shape))
 
             pil_image = transforms.ToPILImage()(image)
+            pil_mask = transforms.ToPILImage()(mask)
             #resize expect CxHxW
             backgorund_image = transforms.Resize((max_size, max_size))(pil_image)
             background_tensor = transforms.ToTensor()(backgorund_image)
@@ -74,24 +79,29 @@ class ComposeNode:
             new_width = int(width * scale_factor)
 
             object_image = transforms.Resize((new_height, new_width))(pil_image)
+            mask_image = transforms.Resize((new_height, new_width))(pil_mask)
+
             object_image_tensor = transforms.ToTensor()(object_image)
+            mask_image_tensor = transforms.ToTensor()(mask_image)
 
             print("Object image after resize shape: ", str(background_tensor.shape))
             object_image_tensor_permuted = object_image_tensor.permute(1, 2, 0) #because Comfy expects HWC
             background_tensor_permuted = background_tensor.permute(1, 2, 0) #because Comfy expects HWC
+            mask_image_tensor_permuted = mask_image_tensor.permute(1, 2, 0) #because Comfy expects HWC
             collage_batch[i] = background_tensor_permuted
+
             # Paste the image in the center of the output image
             x_start = (max_size - new_width) // 2
             y_start = (max_size - new_height) // 2
             collage_batch[i, y_start:y_start+new_height, x_start:x_start+new_width, :] = object_image_tensor_permuted
-
+            masks_batch[i, y_start:y_start+new_height, x_start:x_start+new_width, :] = mask_image_tensor_permuted
             # # Repeat the object in the collage
             # for _ in range(number_of_repetitions - 1):
             #     x_offset = np.random.randint(0, max_size - new_width)
             #     y_offset = np.random.randint(0, max_size - new_height)
             #     collage_batch[i, y_offset:y_offset+new_height, x_offset:x_offset+new_width, :] += image
 
-        return collage_batch
+        return masks_batch, collage_batch
 
     # def create_collage(self, mask, image, maxSize, item_size_percentage, numberOfRepetitions):
     #     print("shapes")
