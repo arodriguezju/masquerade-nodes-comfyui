@@ -44,7 +44,7 @@ def unpad_image(image):
     # Crop the image to these valid rows and columns
     cropped_img = image[first_valid_row:last_valid_row+1, first_valid_col:last_valid_col+1, :]
 
-    return cropped_img
+    return torch.clamp(cropped_img, 0, 255)
 
 # Example usage
 # images = [np.random.rand(32, 32, 3), np.random.rand(28, 28, 3)]  # list of HWC numpy arrays
