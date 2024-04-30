@@ -109,6 +109,8 @@ class SegmentNode:
 
             squeezed_tensor = medsam_seg_prob.squeeze(0).squeeze(0)  # Now shape [h, w]
            
+            print("Segment output tensor shape: " + str(squeezed_tensor.shape))  # [h, w, c]
+            print("Segment output tensor type: " + str(squeezed_tensor.dtype)) #float32
             # print(medsam_seg_prob_t.shape)
             # Image.fromarray(medsam_seg_prob_t.numpy()).show()
             output_masks.append(squeezed_tensor)
