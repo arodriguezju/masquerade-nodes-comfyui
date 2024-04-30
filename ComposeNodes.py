@@ -1,7 +1,9 @@
 import torch
 import torchvision.transforms.functional as TF
 import random
-
+import torchvision.transforms as transforms
+import numpy as np
+from .PadBatcher import unpad_image
 
 class ComposeNode:
     def __init__(self):
@@ -14,7 +16,7 @@ class ComposeNode:
                 "mask_batch": ("IMAGE",),             
                 "image_batch": ("IMAGE",),  
                 "maxSize": ("INT", {"default": 900, "min": 0, "max": 2000, "step": 1}),
-                "padding": ("INT", {"default": 50, "min": 0, "max": 500, "step": 1}),
+                "item_size_percentage": ("FLOAT", {"default": 0.3, "min": 0, "max": 1, "step": 0.1}),
                 "numberOfRepetitions": ("INT", {"default": 5, "min": 0, "max": 5, "step": 1}),
             },
         }
@@ -24,42 +26,105 @@ class ComposeNode:
 
     CATEGORY = "Compose"
 
-    def run(self, mask_batch, image_batch, maxSize, padding, numberOfRepetitions):
-        masks, images = self.create_collage(mask_batch, image_batch, maxSize, padding, numberOfRepetitions)
-        return (masks, images, )
+    def run(self, mask_batch, image_batch, maxSize, item_size_percentage, numberOfRepetitions):
+        # masks, images = self.create_collage(mask_batch, image_batch, maxSize, item_size_percentage, numberOfRepetitions)
+        images = self.create_collage(image_batch, maxSize, item_size_percentage, numberOfRepetitions)
+
+        return (mask_batch, images, )
     
 
-    def create_collage(self, mask, image, maxSize, padding, numberOfRepetitions):
+
+    def create_collage(self, image_batch, max_size, object_size_proportion, number_of_repetitions):
+        """
+        Create a collage with the object in the image batch.
+
+        Args:
+            image_batch: BHWC tensor, float32 type
+            max_size: int, maximum size of the output image
+            object_size_proportion: float, proportion of the area that the object should occupy
+            number_of_repetitions: int, number of times to repeat the object in the collage
+
+        Returns:
+            collage_batch: BHWC tensor, float32 type, with the collage images
+        """
+        batch_size, _, _, channels = image_batch.shape
+        collage_batch = torch.zeros((batch_size, max_size, max_size, channels), dtype=torch.float32)
+
+        for i in range(batch_size):
+            image = image_batch[i]
+            image = unpad_image(image)
+            # Resize the image to max_size x max_size
+            print("Input Image shape: ", str(image.shape))
+
+            pil_image = transforms.ToPILImage()(image)
+            #resize expect CxHxW
+            backgorund_image = transforms.Resize((max_size, max_size))(pil_image)
+            background_tensor = transforms.ToTensor()(backgorund_image)
+            print("Background image shape: ", str(background_tensor.shape))
+
+            # Calculate the scale factor to achieve the desired object size proportion
+            height, width = image.shape[1], image.shape[2]
+            object_area = height * width
+            desired_object_area = max_size ** 2 * object_size_proportion
+            scale_factor = np.sqrt(desired_object_area / object_area)
+
+            # Resize the image to the desired object size
+            new_height = int(height * scale_factor)
+            new_width = int(width * scale_factor)
+
+            object_image = transforms.Resize((new_height, new_width))(pil_image)
+            object_image_tensor = transforms.ToTensor()(object_image)
+
+            print("Object image after resize shape: ", str(background_tensor.shape))
+
+            # Paste the image in the center of the output image
+            x_start = (max_size - new_width) // 2
+            y_start = (max_size - new_height) // 2
+            collage_batch[i, y_start:y_start+new_height, x_start:x_start+new_width, :] = object_image_tensor
+
+            # # Repeat the object in the collage
+            # for _ in range(number_of_repetitions - 1):
+            #     x_offset = np.random.randint(0, max_size - new_width)
+            #     y_offset = np.random.randint(0, max_size - new_height)
+            #     collage_batch[i, y_offset:y_offset+new_height, x_offset:x_offset+new_width, :] += image
+
+        return collage_batch
+
+    def create_collage(self, mask, image, maxSize, item_size_percentage, numberOfRepetitions):
         print("shapes")
         print(mask.shape, image.shape)
         device = torch.device("cpu")
         mask = mask.to(device)
         image = image.to(device)
 
-        p_image = image.permute(0, 3, 1, 2)  # Permute channel because torch expects C, H, W
-        p_mask = mask.unsqueeze(1)  # Add a channel dimension to the mask
-        B, C, H, W = p_image.shape
+        # p_image = image.permute(0, 3, 1, 2)  # Permute channel because torch expects C, H, W
+        # p_mask = mask.unsqueeze(1)  # Add a channel dimension to the mask
+        B, _, _, C = image.shape
+
+
+        base_images = torch.empty((B, maxSize, maxSize, C), dtype=torch.float32)
 
         print("shapes")
-        print(p_mask.shape, p_image.shape)
+        print(image.shape)
+        for b in range(B):
+            # H, W, C = image[b].shape
+            # scale_factor = min(maxSize / max(H, W), 1)  # Ensure not to upscale
 
-        scale_factor = min(maxSize / max(H, W), 1)  # Ensure not to upscale
-        newH, newW = int(H * scale_factor), int(W * scale_factor)
-        max_separation = int(padding)  # Maximum separation between images
-        min_separation = int(padding / 2)  # Minimum separation between images
-        base_height = padding * 2 + newH
-        base_width = padding * 2 + newW  * numberOfRepetitions + max_separation * (numberOfRepetitions - 1) 
+            # newH, newW = int(H * scale_factor), int(W * scale_factor)
+            max_separation = int(padding)  # Maximum separation between images
+            min_separation = int(padding / 2)  # Minimum separation between images
+            base_height = padding * 2 + newH
+            base_width = padding * 2 + newW  * numberOfRepetitions + max_separation * (numberOfRepetitions - 1) 
 
-        #Make square
-        base_height = max(base_height, base_width)
-        base_width = base_height
-
-        
-        # Initialize an empty tensor for the base_images with the desired dimensions
-        base_images = torch.empty((B, C, base_height, base_width), dtype=torch.float32)
+            #Make square
+            base_height = max(base_height, base_width)
+            base_width = base_height
+            
+            # Initialize an empty tensor for the base_images with the desired dimensions
+            base_images = torch.empty((B, C, base_height, base_width), dtype=torch.float32)
 
     # Loop over all images in the batch and resize them
-        for b in range(B):
+        
         # Resize each image to the new base dimensions
             base_images[b] = TF.resize(p_image[b], size=(base_height, base_width))
 
