@@ -54,7 +54,7 @@ class SegmentNode:
         print(image_batch.shape)
         for i in range(image_batch.size(0)):
             tensor_img = image_batch[i]
-            print("Detect input tensor shape: " + str(tensor_img.shape)) #CxHxW
+            print("Detect input tensor shape: " + str(tensor_img.shape))  # [h, w, c]
             print("Detect input tensor type: " + str(tensor_img.dtype)) #float32
             pil_image = Image.fromarray((tensor_img.numpy() * 255).astype(np.uint8))
             # image = Image.fromarray(image.numpy().astype(np.uint8))
@@ -69,8 +69,8 @@ class SegmentNode:
             cropped_images_with_box.append(to_tensor(cropped_image).permute(1, 2, 0))
             images.append(to_tensor(image).permute(1, 2, 0))
             boxes.append(torch.tensor(box))
-            print("Detect output tensor shape: " + str(images[i].shape))
-            print("Detect output tensor type: " + str(images[i].dtype))
+            print("Detect output tensor shape: " + str(images[i].shape)) # [h, w, c]
+            print("Detect output tensor type: " + str(images[i].dtype)) #float32
         return pad_and_batch_images(original_images_with_box), pad_and_batch_images(cropped_images_with_box), pad_and_batch_images(images), torch.stack(boxes)
 
     def segment(self, sam_model, sam_model_base, image_batch, box_batch):
@@ -82,17 +82,18 @@ class SegmentNode:
         output_masks = []
 
         #expected input shape [B, H , W, C]
-        print(image_batch.shape)
 
         for i in range(image_batch.size(0)):
             box = box_batch[i]
-            image_tensor = unpad_image(image_batch[i])
-            print(image_batch[i].dtype)
+            tensor_img = image_batch[i]
+            print("Segment input tensor shape: " + str(tensor_img.shape))  # [h, w, c]
+            print("Segment input tensor type: " + str(tensor_img.dtype)) #float32
+            unpadded_tensor = unpad_image(tensor_img)
 
-            print(image_tensor.dtype)
-            print(image_tensor.shape)
+            print("Segment unpadded tensor shape: " + str(unpadded_tensor.shape))  # [h, w, c]
+            print("Segment unpadded tensor type: " + str(unpadded_tensor.dtype)) #float32
 
-            pil_image = Image.fromarray(image_tensor.numpy().astype(np.uint8))
+            pil_image = Image.fromarray(unpadded_tensor.numpy().astype(np.uint8))
             image = pil_image.convert("RGB")
             # image.show()
             inputs = processor(image, input_boxes=[[box.tolist()]], return_tensors="pt").to(get_torch_device())
