@@ -1,28 +1,37 @@
 import torch
 import numpy as np
 
-def pad_and_batch_images(images):
-    # Determine the maximum width and height
-    max_height = max(img.shape[0] for img in images)
-    max_width = max(img.shape[1] for img in images)
-    num_channels = images[0].shape[2]  # Assuming all images have the same number of channels
+import numpy as np
+import torch.nn.functional as F
 
-    # Create a batch tensor with padding value -1
-    batch_tensor = torch.full((len(images), num_channels, max_height, max_width), -1)
+def pad_and_batch(tensors):
+    """
+    Receives an array of tensors of shape HWC and float32 type.
+    Returns a batched tensor of shape BHWC and float32 type.
+    Pads smaller images with -1 values to match the size of the largest image.
+    """
+    # Find the maximum height and width of the images
+    max_height = max(tensor.shape[0] for tensor in tensors)
+    max_width = max(tensor.shape[1] for tensor in tensors)
 
-    # Pad each image and copy it into the batch tensor
-    for i, img in enumerate(images):
-        img_tensor = img.permute(2, 0, 1)  # Rearrange dimensions from HWC to CHW
-        # Calculate padding sizes
-        padding_left = 0
-        padding_right = max_width - img.shape[1]
-        padding_top = 0
-        padding_bottom = max_height - img.shape[0]
-        # Apply padding
-        padded_img = torch.nn.functional.pad(img_tensor, (padding_left, padding_right, padding_top, padding_bottom), value=-1)
-        batch_tensor[i] = padded_img
+    # Create a list to store the padded tensors
+    padded_tensors = []
 
-    return batch_tensor
+    # Iterate over the input tensors
+    for tensor in tensors:
+        # Calculate the padding needed for this tensor
+        height_pad = max_height - tensor.shape[0]
+        width_pad = max_width - tensor.shape[1]
+
+        # Pad the tensor with -1 values
+        padded_tensor = F.pad(tensor, (0, width_pad, 0, height_pad), value=torch.nan)
+        # Add the padded tensor to the list
+        padded_tensors.append(padded_tensor)
+
+    # Convert the list of padded tensors to a batched tensor
+    batched_tensor = torch.stack(padded_tensors, axis=0)
+
+    return batched_tensor
 
 def unpad_image(image):
     # Assuming the tensor format is (H, W, C) and padding value is -1
