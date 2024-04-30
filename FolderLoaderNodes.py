@@ -15,7 +15,7 @@ class ImageFromFolderLoaderNode:
         return {
             "required": {
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),   
-                "folder_path": ("STRING", {"multiline": True}),                  
+                "folder_path": ("STRING", {"multiline": False}),                  
             },
         }
 
@@ -25,7 +25,7 @@ class ImageFromFolderLoaderNode:
     CATEGORY = "PromptLoader"
 
     def run(self, seed, folder_path):
-        image = self.get_line_from_file(seed, folder_path)
+        image = self.load_images_from_folder(seed, folder_path)
         return (image, )
     
 
