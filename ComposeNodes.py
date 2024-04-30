@@ -57,7 +57,7 @@ class ComposeNode:
             image = unpad_image(image)
             # Resize the image to max_size x max_size
             image = image.permute(2, 0, 1)  # From HWC to CHW  because PIL expects C, H, W
-            mask = mask.permute(2, 0, 1)
+            mask = mask.unsqueeze(0)  # Add a channel dimension to the mask
             print("Input Image shape: ", str(image.shape))
 
             pil_image = transforms.ToPILImage()(image)
