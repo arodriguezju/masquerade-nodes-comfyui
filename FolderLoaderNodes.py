@@ -37,8 +37,11 @@ class ImageFromFolderLoaderNode:
         image = Image.open(file).convert('RGB')
         img_tensor = torch.from_numpy(np.array(image)).float() / 255.0
         # add batch dimension
-        img_tensor = img_tensor.unsqueeze(0)
-        return img_tensor.permute(0, 3, 1, 2)        
+        img_tensor = img_tensor.unsqueeze(0).permute(0, 3, 1, 2) 
+        print("Image shape: " + str(img_tensor.shape))
+        print("Image type: " + str(img_tensor.dtype))
+
+        return img_tensor       
 
 
 NODE_CLASS_MAPPINGS = {
