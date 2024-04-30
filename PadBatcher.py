@@ -28,6 +28,9 @@ def unpad_image(image):
     # Assuming the tensor format is (H, W, C) and padding value is -1
     assert image.dim() == 3, "Input tensor must have 3 dimensions (H, W, C)"
     
+    # Convert the tensor to float32
+    image = image.float()
+    
     # Identify rows and columns that contain only -1 values across all channels
     valid_rows = ~(image == -1).any(dim=2).any(dim=1)  # Check each row
     valid_cols = ~(image == -1).any(dim=2).any(dim=0)  # Check each column
