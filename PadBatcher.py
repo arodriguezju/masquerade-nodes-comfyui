@@ -4,7 +4,7 @@ import numpy as np
 import numpy as np
 import torch.nn.functional as F
 
-def pad_and_batch(tensors):
+def pad_and_batch_images(tensors):
     """
     Receives an array of tensors of shape HWC and float32 type.
     Returns a batched tensor of shape BHWC and float32 type.
