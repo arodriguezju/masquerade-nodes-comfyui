@@ -78,6 +78,8 @@ class ComposeNode:
 
             print("Object image after resize shape: ", str(background_tensor.shape))
             object_image_tensor_permuted = object_image_tensor.permute(1, 2, 0) #because Comfy expects HWC
+            background_tensor_permuted = background_tensor.permute(1, 2, 0) #because Comfy expects HWC
+            collage_batch[i] = background_tensor_permuted
             # Paste the image in the center of the output image
             x_start = (max_size - new_width) // 2
             y_start = (max_size - new_height) // 2
