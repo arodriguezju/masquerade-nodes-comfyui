@@ -26,16 +26,15 @@ class SegmentNode:
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "IMAGE", "IMAGE", )
+    RETURN_TYPES = ("IMAGE", "IMAGE", )
     FUNCTION = "detect"
 
     CATEGORY = "Grounding Dino"
 
     def detect(self, image_batch, box_class, box_threshold, padding_proportion, sam_model, sam_base_model):
-        original_image_with_box, crop_image_with_box, crop, box = self.detect_box("GroundingDINO_SwinT_OGC (694MB)", image_batch, box_class, box_threshold, padding_proportion)
+        original_image_with_box, crop_image_with_box, crop, box = self.detect_box("GroundingDINO_SwinB (938MB)", image_batch, box_class, box_threshold, padding_proportion)
         masks = self.segment(sam_model, sam_base_model, crop, box)
-        masked_image = self.apply_mask_to_image(masks, crop, 0.1)
-        return (masks, crop, masked_image, )
+        return (masks, crop, )
         # draw_box_on_image(crop, torch_box.numpy()).show()
 
     def detect_box(self, grounding_dino_model_name, image_batch, segmentation_class, threshold, padding_proportion):
