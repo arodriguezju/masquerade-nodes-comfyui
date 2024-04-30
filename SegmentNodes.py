@@ -4,12 +4,11 @@ from .GroundingDINO import load_groundingdino_model, groundingdino_predict, draw
 from .MaskNodes import tensor2rgba, tensor2rgb
 from torchvision.transforms.functional import to_tensor, to_pil_image
 from transformers import SamModel, SamProcessor
-
 import torch
 from PIL import Image
 from torchvision import transforms
 import numpy as np
-
+from .PadBatcher import pad_and_batch_images, unpad_image
 class SegmentNode:
     def __init__(self):
         pass
@@ -21,6 +20,7 @@ class SegmentNode:
                 "image_batch": ("IMAGE",),
                 "box_class": ("STRING", {"multiline": False, "default": "earring"}),
                 "box_threshold": ("FLOAT", {"default": 0.5, "min": 0, "max": 1, "step": 0.01}),
+                "padding_proportion": ("FLOAT", {"default": 0.4, "min": 0, "max": 1, "step": 0.01}),
                 "sam_model": ("STRING", {"multiline": False, "default": "crom87/segmentation_test2"}),
                 "sam_base_model": ("STRING", {"multiline": False, "default": "facebook/sam-vit-base"}),
             },
@@ -31,14 +31,14 @@ class SegmentNode:
 
     CATEGORY = "Grounding Dino"
 
-    def detect(self, image_batch, box_class, box_threshold, sam_model, sam_base_model):
-        original_image, crop_image, crop, box = self.detect_box("GroundingDINO_SwinT_OGC (694MB)", image_batch, box_class, box_threshold)
+    def detect(self, image_batch, box_class, box_threshold, padding_proportion, sam_model, sam_base_model):
+        original_image_with_box, crop_image_with_box, crop, box = self.detect_box("GroundingDINO_SwinT_OGC (694MB)", image_batch, box_class, box_threshold, padding_proportion)
         masks = self.segment(sam_model, sam_base_model, crop, box)
         masked_image = self.apply_mask_to_image(masks, crop, 0.1)
         return (masks, crop, masked_image, )
         # draw_box_on_image(crop, torch_box.numpy()).show()
 
-    def detect_box(self, grounding_dino_model_name, image_batch, segmentation_class, threshold):
+    def detect_box(self, grounding_dino_model_name, image_batch, segmentation_class, threshold, padding_proportion):
 
         def extract_biggest_box(boxes):
             box_areas = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
@@ -61,7 +61,7 @@ class SegmentNode:
             print(f"Detected {detected_boxes.size(dim=0)} boxes.")
             biggest_box = extract_biggest_box(detected_boxes).numpy()
             original_image = draw_box_on_image(pil_image, biggest_box)
-            image, box = self.crop_image_proportional_padding(pil_image, biggest_box, 0.4)
+            image, box = self.crop_image_proportional_padding(pil_image, biggest_box, padding_proportion)
             cropped_image = draw_box_on_image(image, box)
 
             original_images_with_box.append(to_tensor(original_image).permute(1, 2, 0)) #output needs to be [h, w, c]
@@ -69,7 +69,7 @@ class SegmentNode:
             images.append(to_tensor(image).permute(1, 2, 0))
             boxes.append(torch.tensor(box))
 
-        return torch.stack(original_images_with_box), torch.stack(cropped_images_with_box), torch.stack(images), torch.stack(boxes)
+        return pad_and_batch_images(original_images_with_box), pad_and_batch_images(cropped_images_with_box), pad_and_batch_images(images), torch.stack(boxes)
 
     def segment(self, sam_model, sam_model_base, image_batch, box_batch):
         #facebook/sam-vit-huge
@@ -81,7 +81,7 @@ class SegmentNode:
 
         for i in range(image_batch.size(0)):
             box = box_batch[i]
-            image_tensor = image_batch[i]
+            image_tensor = unpad_image(image_batch[i])
             pil_image = Image.fromarray((image_tensor.numpy() * 255).astype(np.uint8))
             image = pil_image.convert("RGB")
             # image.show()
@@ -201,4 +201,23 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 # tensor_image = transform(image)
 # batched_image = tensor_image.permute(1, 2, 0).unsqueeze(0)
 # node = SegmentNode()
-# node.detect(batched_image, "earring", 0.5, "crom87/segmentation_test2", "facebook/sam-vit-base")
+# mask, crop, test,  = node.detect(batched_image, "earring", 0.5, "crom87/segmentation_test2", "facebook/sam-vit-base")
+# to_pil_image(mask[0]).show()
+
+# from ComposeNodes import create_collage
+
+# print(mask.shape, crop.shape)
+
+# mask_r, image_r = create_collage(mask, crop, 1000, 100, 2)
+# to_pil_image(image_r[0]).show()
+# to_pil_image(mask_r[0]).show()
+
+
+# Example usage
+# mask = torch.randn(1, 100, 100)  # Example mask
+# image = torch.randn(1, 100, 100, 3)  # Example image
+# maxSize = 50
+# padding = 10
+# numberOfRepetitions = 5
+# collage_mask, collage_image = create_collage(mask, image, maxSize, padding, numberOfRepetitions)
+# print(collage_mask.shape, collage_image.shape)
