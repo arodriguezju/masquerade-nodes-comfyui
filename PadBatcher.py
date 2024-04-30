@@ -40,14 +40,13 @@ def unpad_image(tensor):
     Returns a tensor of shape HWC, float32 with new size.
     """
     # Find the indices of non-NaN values in each dimension
-    height_idx = torch.nonzero(~torch.isnan(tensor[:, :, 0]), as_tuple=True)[0]
-    width_idx = torch.nonzero(~torch.isnan(tensor[:, 0, :]), as_tuple=True)[0]
+    idx = torch.nonzero(~torch.isnan(tensor))
 
     # Find the minimum and maximum indices in each dimension
-    min_height = height_idx.min()
-    max_height = height_idx.max() + 1
-    min_width = width_idx.min()
-    max_width = width_idx.max() + 1
+    min_height = idx[:, 0].min()
+    max_height = idx[:, 0].max() + 1
+    min_width = idx[:, 1].min()
+    max_width = idx[:, 1].max() + 1
 
     # Slice the tensor to remove NaN values
     unpadded_tensor = tensor[min_height:max_height, min_width:max_width, :]
