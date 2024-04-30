@@ -55,7 +55,6 @@ class ComposeNode:
             image = image_batch[i]
             mask = mask_batch[i]
             image = unpad_image(image)
-            mask = unpad_image(mask)
             # Resize the image to max_size x max_size
             image = image.permute(2, 0, 1)  # From HWC to CHW  because PIL expects C, H, W
             mask = mask.permute(2, 0, 1)
