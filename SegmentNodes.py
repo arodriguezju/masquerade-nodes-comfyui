@@ -85,6 +85,8 @@ class SegmentNode:
             print(image_batch[i].dtype)
 
             print(image_tensor.dtype)
+            print(image_tensor.shape)
+
             pil_image = Image.fromarray(image_tensor.numpy().astype(np.uint8))
             image = pil_image.convert("RGB")
             # image.show()
