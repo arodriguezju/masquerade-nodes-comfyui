@@ -54,8 +54,8 @@ class SegmentNode:
         print(image_batch.shape)
         for i in range(image_batch.size(0)):
             tensor_img = image_batch[i]
-            print(tensor_img.shape) #CxHxW
-            print(tensor_img.dtype) #float32
+            print("Detect input tensor shape: " + tensor_img.shape) #CxHxW
+            print("Detect input tensor type: " + tensor_img.dtype) #float32
             pil_image = Image.fromarray((tensor_img.numpy() * 255).astype(np.uint8))
             # image = Image.fromarray(image.numpy().astype(np.uint8))
             detected_boxes = groundingdino_predict(grounding_dino_model, pil_image, segmentation_class, threshold)
@@ -69,7 +69,8 @@ class SegmentNode:
             cropped_images_with_box.append(to_tensor(cropped_image).permute(1, 2, 0))
             images.append(to_tensor(image).permute(1, 2, 0))
             boxes.append(torch.tensor(box))
-
+            print("Detect output tensor shape: " + image.shape)
+            print("Detect output tensor type: " + image.dtype) 
         return pad_and_batch_images(original_images_with_box), pad_and_batch_images(cropped_images_with_box), pad_and_batch_images(images), torch.stack(boxes)
 
     def segment(self, sam_model, sam_model_base, image_batch, box_batch):
