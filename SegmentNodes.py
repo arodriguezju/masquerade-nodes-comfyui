@@ -82,7 +82,7 @@ class SegmentNode:
         for i in range(image_batch.size(0)):
             box = box_batch[i]
             image_tensor = unpad_image(image_batch[i])
-            pil_image = Image.fromarray(image_tensor.numpy().astype(np.uint8))
+            pil_image = Image.fromarray(image_tensor.numpy())
             image = pil_image.convert("RGB")
             # image.show()
             inputs = processor(image, input_boxes=[[box.tolist()]], return_tensors="pt").to(get_torch_device())
